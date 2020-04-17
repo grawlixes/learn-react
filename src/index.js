@@ -2,46 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
-var turn = 'o';
-var isVictory = false;
 // The individual cells
 class Square extends React.Component {
-    constructor(props) {
-        // superconstructor
-        super(props)
-
-        // attributes
-        this.state = {block: ''};
-
-        /* need to bind "this" to the function
-           in order to use "this" in callback
-        */
-        this.changeOnClick = this.changeOnClick
-                                 .bind(this);
-    }
-
-    /* Changes a cell when clicked on. Changes to
-     * "X" if it's player 1's turn, "O" otherwise.
-     * Only changes the cell if it's unoccupied.
-     */
-    changeOnClick(e) {
-        if (this.state.block === '' && 
-            !isVictory) {
-
-            this.setState(state => ({
-                block: turn
-            }));
-           
-            turn = (turn === 'x') ? 'o' : 'x';
-        }
-    }
-   
     // Returns the Square object.
     render() {
         return (
             <button className="square"
-                    onClick={this.changeOnClick}>
-                {this.state.block}
+                    onClick={() => this.props.onClick()}>
+                {this.props.value}
             </button>
         );
     }
@@ -50,12 +18,12 @@ class Square extends React.Component {
 class Board extends React.Component {
     constructor(props) {
         super(props);
-        
-        this.state = {status: 'Next player: ' + turn};
-       
-        // Bind "this" to changeStatus function
-        this.boardOnClick = this.boardOnClick
-                                .bind(this);
+
+        this.state = {
+            squares: Array(9).fill(null),
+            isVictory: false,
+            turn: 'x'
+        }
     }
 
     /* Not necessary because each square is identical,
@@ -63,40 +31,73 @@ class Board extends React.Component {
      * per square in the future. Maybe useful for victory.
      */
     renderSquare(i) {
-        return <Square />;
+        return <Square 
+                    value={this.state.squares[i]}
+                    onClick={() => this.handleSquareClick(i)}
+                />;
     }
 
-    /* Every click on the board or info div will
-     * run this function.
+    /* Handles click when a square is pressed. Note that this
+     * is defined within the Board class, not the Square class.
      */
-    boardOnClick(e) {
-        if (!isVictory) {
-            this.changeStatus(e);
-            this.checkVictory(e);
+    handleSquareClick(i) {
+        const squares = this.state.squares.slice();
+        const curPlayer = this.state.turn;
+
+        if (squares[i] === null &&
+            !this.state.isVictory) {
+            squares[i] = curPlayer;
+
+            const didWin = this.checkVictory(curPlayer);
+            const nextTurn = (didWin ^ curPlayer === 'x') ?
+                             'o' : 'x';
+            this.setState(
+                {
+                    squares: squares,
+                    isVictory: didWin, 
+                    turn: nextTurn
+                });
         }
     }
 
-    /* Changes the status to the next player's turn
-     * if it changes. If not, this is still called,
-     * but it won't change anything.
+    /* Checks if the given player ended the game with their
+     * previous move.
      */
-    changeStatus(e) {
-        this.setState(state => ({
-            status: 'Next player: ' + turn
-        }));
+    checkVictory(ch) {
+        const squares = this.state.squares;
+
+        for (var i = 0; i < 3; i++) {
+            // check column i
+            if (squares[i] === ch &&
+                squares[i + 3] === ch &&
+                squares[i + 6] === ch) {
+                return true;
+            }
+
+            // check row i
+            if (squares[i*3] === ch &&
+                squares[i*3 + 1] === ch &&
+                squares[i+3 + 2] === ch) {
+                return true;
+            }
+        }
+
+        // check diagonals
+        return (squares[0] === ch &&
+                squares[4] === ch &&
+                squares[8] === ch) ||
+               (squares[2] === ch &&
+                squares[4] === ch &&
+                squares[6] === ch);
     }
 
-    // Checks entire board for a victory for either player.
-    checkVictory(e) {
-        // todo
-    }
-
-    // todo probably make an array of squares to check victory
     render() {
         return (
             <div onClick={this.boardOnClick}>
                 <div className="status">
-                    {this.state.status}
+                    {(this.state.isVictory) ?
+                        ("The winner is " + this.state.turn) :
+                        ("Next player: " + this.state.turn)}
                 </div>
                 <div className="board-row">
                     {this.renderSquare(0)}
