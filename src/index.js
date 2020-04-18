@@ -3,16 +3,13 @@ import ReactDOM from 'react-dom';
 import './index.css';
 
 // The individual cells
-class Square extends React.Component {
-    // Returns the Square object.
-    render() {
-        return (
-            <button className="square"
-                    onClick={() => this.props.onClick()}>
-                {this.props.value}
-            </button>
-        );
-    }
+function Square(props) {
+    return (
+        <button className="square"
+                onClick={props.onClick}>
+            {props.value}
+        </button>
+    );
 }
 
 class Board extends React.Component {
@@ -22,13 +19,14 @@ class Board extends React.Component {
         this.state = {
             squares: Array(9).fill(null),
             isVictory: false,
-            turn: 'x'
+            turn: 'X'
         }
+
+        this.moves = [];
     }
 
-    /* Not necessary because each square is identical,
-     * but could be useful if we want specific values
-     * per square in the future. Maybe useful for victory.
+    /* Renders each square, takes note of it in an array,
+     * and sets its on-click function.
      */
     renderSquare(i) {
         return <Square 
@@ -44,40 +42,44 @@ class Board extends React.Component {
         const squares = this.state.squares.slice();
         const curPlayer = this.state.turn;
 
-        if (squares[i] === null &&
-            !this.state.isVictory) {
+        if (squares[i] === null && !this.state.isVictory) {
             squares[i] = curPlayer;
-
-            const didWin = this.checkVictory(curPlayer);
-            const nextTurn = (didWin ^ curPlayer === 'x') ?
-                             'o' : 'x';
+            
+            const didWin = this.checkVictory(squares, curPlayer);
+            const nextTurn = (didWin ^ curPlayer === 'X') ?
+                             'O' : 'X';
             this.setState(
                 {
                     squares: squares,
                     isVictory: didWin, 
                     turn: nextTurn
                 });
+
+            this.moves.push([curPlayer, i]);
+        }
+
+        for (let x of this.moves) {
+            console.log(x);
         }
     }
 
     /* Checks if the given player ended the game with their
      * previous move.
      */
-    checkVictory(ch) {
-        const squares = this.state.squares;
-
+    checkVictory(squares, ch) {
+        console.log(squares);
         for (var i = 0; i < 3; i++) {
             // check column i
             if (squares[i] === ch &&
                 squares[i + 3] === ch &&
                 squares[i + 6] === ch) {
                 return true;
-            }
-
+            } 
+           
             // check row i
             if (squares[i*3] === ch &&
                 squares[i*3 + 1] === ch &&
-                squares[i+3 + 2] === ch) {
+                squares[i*3 + 2] === ch) {
                 return true;
             }
         }
@@ -127,7 +129,7 @@ class Game extends React.Component {
                     <Board />
                 </div>
             <div className="game-info">
-                <div>{/* status */}</div>
+                <div>Playboi Carti</div>
                     <ol>{/* TODO */}</ol>
                 </div>
             </div>
